@@ -12,6 +12,7 @@ import dns.rdtypes.ANY.MX
 import dns.rdtypes.IN.A
 import dns.rdtypes.IN
 import re
+import sys
 
 class ZoneHandle:
     IMPORT_AXFR = 1
@@ -100,14 +101,12 @@ class ZoneHandle:
                         if record['content']==self.domain_name:
                             record['content'] = '@'
                         zone_text += '%s  %s  IN  CNAME  %s\n' % (record['name'], ttl, record['content'])
-            
+
             if self.debug: print zone_text
-            
             self.zone = dns.zone.from_text(zone_text)
             return self.zone
 
         except Exception, e:
-            print e
             if self.debug: print e
             raise e
         
@@ -279,7 +278,8 @@ class ZoneHandle:
 
     def to_file(self, file, sorted=True, relativize=True):
         try:
-            self.zone.to_file(file, sorted, relativize)
+            file.write("$ORIGIN " + self.domain_name + ".\n")
+            file.write(self.zone.to_text(sorted, relativize))
             return True 
         except Exception, e:
             raise e

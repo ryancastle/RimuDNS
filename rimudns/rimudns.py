@@ -190,18 +190,24 @@ class RimuDNS:
             if str(root.is_ok).startswith('OK'):
                 for record in root.actions.action.iterchildren():
                     record_type = record.attrib['type']
-                    if self.expect_absolute and record_type != 'SOA':
-                        # Zonomi returns absolute path without period
-                        for key in ['name', 'content']:
-                            if record.attrib.has_key(key) and self.is_valid_hostname(record.attrib[key]):
-                                record.set(key, record.attrib[key] + '.') 
+                    self.add_trailing_periods(record_type, record)
 
                     if not records.has_key(record_type): records[record_type] = []
                     records[record_type].append(record.attrib)
                 return records
         except Exception, e:
             raise e
-            
+
+    # Zonomi returns absolute path without period
+    def add_trailing_periods(self, record_type, record):
+        if not self.expect_absolute or record_type == 'SOA':
+            return
+        
+        record.set('name', record.attrib['name'] + '.') 
+
+        if self.is_valid_hostname(record.attrib['content']):
+            record.set('content', record.attrib['content'] + '.')
+
     def is_valid_hostname(self, hostname):
         import re
         if len(hostname) > 255:
@@ -209,7 +215,8 @@ class RimuDNS:
         if hostname[-1] == ".":
             hostname = hostname[:-1] # strip exactly one dot from the right, if present
         allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
-        return all(allowed.match(x) for x in hostname.split("."))
+        digits = re.compile("^[\d]{0,3}$")
+        return all(allowed.match(x) for x in hostname.split(".")) and not all(digits.match(x) for x in hostname.split("."))
             
     def set_record(self, host, value, record_type='A', prio=None, ttl=None):
         '''Set an IP Address (A) record
