@@ -101,7 +101,6 @@ class ZoneHandle:
                             record['content'] = '@'
                         zone_text += '%s  %s  IN  CNAME  %s\n' % (record['name'], ttl, record['content'])
                 
-            print zone_text
             self.zone = dns.zone.from_text(zone_text)
             return self.zone
 
