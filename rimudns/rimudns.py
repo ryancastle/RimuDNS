@@ -190,8 +190,11 @@ class RimuDNS:
             if str(root.is_ok).startswith('OK'):
                 for record in root.actions.action.iterchildren():
                     record_type = record.attrib['type']
-                    if self.expect_absolute and record_type != 'SOA' and record.attrib.has_key('name'):
-                        record.set('name', record.attrib['name'] + '.') # Zonomi returns absolute path without period
+                    if self.expect_absolute and record_type != 'SOA':
+                        # Zonomi returns absolute path without period
+                        for key in ['name', 'content']:
+                            if record.attrib.has_key(key) and self.is_valid_hostname(record.attrib[key]):
+                                record.set(key, record.attrib[key] + '.') 
 
                     if not records.has_key(record_type): records[record_type] = []
                     records[record_type].append(record.attrib)
@@ -199,7 +202,14 @@ class RimuDNS:
         except Exception, e:
             raise e
             
-
+    def is_valid_hostname(hostname):
+        import re
+        if len(hostname) > 255:
+            return False
+        if hostname[-1] == ".":
+            hostname = hostname[:-1] # strip exactly one dot from the right, if present
+        allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+        return all(allowed.match(x) for x in hostname.split("."))
             
     def set_record(self, host, value, record_type='A', prio=None, ttl=None):
         '''Set an IP Address (A) record
