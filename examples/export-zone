@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from rimudns import RimuDNS
-import sys
+import sys, os
 
-api_key = 'ENTERKEY'
+api_key = open(os.path.dirname(os.path.realpath(__file__)) + '/../.keyfile').read()
 
 dns = RimuDNS(api_key)
 dns.use_zonomi()
