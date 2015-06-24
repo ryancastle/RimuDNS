@@ -202,7 +202,7 @@ class RimuDNS:
         except Exception, e:
             raise e
             
-    def is_valid_hostname(hostname):
+    def is_valid_hostname(self, hostname):
         import re
         if len(hostname) > 255:
             return False
