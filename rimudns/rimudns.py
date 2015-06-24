@@ -57,13 +57,16 @@ class RimuDNS:
     def __init__(self, apikey):
         self.apikey = apikey
         self.debug = False
-        self.base_url = 'https://rimuhosting.com' 
+        self.base_url = 'https://rimuhosting.com'
+        self.expect_absolute = False
         
     def use_rimuhosting(self):
         self.base_url = consts.rimu_base_url
+        self.expect_absolute = False
         
     def use_zonomi(self):
         self.base_url = consts.zonomi_base_url
+        self.expect_absolute = True
         
     def change_ip(self, old_ip, new_ip):
         '''Change an IP across all your zones.
@@ -187,6 +190,9 @@ class RimuDNS:
             if str(root.is_ok).startswith('OK'):
                 for record in root.actions.action.iterchildren():
                     record_type = record.attrib['type']
+                    if self.expect_absolute and record_type != 'SOA' and record.attrib.has_key('name'):
+                        record.set('name', record.attrib['name'] + '.') # Zonomi returns absolute path without period
+
                     if not records.has_key(record_type): records[record_type] = []
                     records[record_type].append(record.attrib)
                 return records
